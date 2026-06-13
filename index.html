@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup Football Data Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95em;
+            background: white;
+        }
+
+        input {
+            width: 200px;
+        }
+
+        select {
+            min-width: 150px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table thead {
+            background: #f8f9fa;
+        }
+
+        table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+        }
+
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input, select {
+                width: 100%;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card .value {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ World Cup Data Explorer</h1>
+            <p>Explore World Cup matches, teams, and statistics</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="yearFilter">Year:</label>
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="teamFilter">Team:</label>
+                <select id="teamFilter">
+                    <option value="">All Teams</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <input type="text" id="searchInput" placeholder="Search match...">
+            </div>
+
+            <button onclick="applyFilters()">Apply Filters</button>
+            <button onclick="resetFilters()">Reset</button>
+        </div>
+
+        <div class="content">
+            <!-- Statistics -->
+            <div class="section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Matches</h3>
+                        <div class="value" id="totalMatches">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Goals</h3>
+                        <div class="value" id="totalGoals">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Goals/Match</h3>
+                        <div class="value" id="avgGoals">0.0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Teams</h3>
+                        <div class="value" id="totalTeams">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="section">
+                <h2>Charts & Visualizations</h2>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <canvas id="goalsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="winsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match Results Table -->
+            <div class="section">
+                <h2>Match Results</h2>
+                <div class="table-wrapper">
+                    <table id="matchesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Year</th>
+                                <th>Stage</th>
+                                <th>Home Team</th>
+                                <th>Away Team</th>
+                                <th>Score</th>
+                                <th>Winner</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matchesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Team Statistics Table -->
+            <div class="section">
+                <h2>Team Statistics</h2>
+                <div class="table-wrapper">
+                    <table id="statsTable">
+                        <thead>
+                            <tr>
+                                <th>Team</th>
+                                <th>Matches</th>
+                                <th>Wins</th>
+                                <th>Draws</th>
+                                <th>Losses</th>
+                                <th>Goals For</th>
+                                <th>Goals Against</th>
+                                <th>Goal Diff</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        const data = [
+            { date: '2018-06-14', year: 2018, stage: 'Group', homeTeam: 'Russia', awayTeam: 'Saudi Arabia', homeGoals: 5, awayGoals: 0, winner: 'Russia' },
+            { date: '2018-06-15', year: 2018, stage: 'Group', homeTeam: 'Egypt', awayTeam: 'Uruguay', homeGoals: 0, awayGoals: 1, winner: 'Uruguay' },
+            { date: '2018-06-16', year: 2018, stage: 'Group', homeTeam: 'Portugal', awayTeam: 'Spain', homeGoals: 3, awayGoals: 3, winner: 'Draw' },
+            { date: '2014-07-13', year: 2014, stage: 'Final', homeTeam: 'Germany', awayTeam: 'Argentina', homeGoals: 1, awayGoals: 0, winner: 'Germany' },
+            { date: '2014-07-08', year: 2014, stage: 'Semi', homeTeam: 'Argentina', awayTeam: 'Netherlands', homeGoals: 0, awayGoals: 0, winner: 'Argentina' },
+            { date: '2010-07-11', year: 2010, stage: 'Final', homeTeam: 'Spain', awayTeam: 'Netherlands', homeGoals: 1, awayGoals: 0, winner: 'Spain' },
+            { date: '2022-12-18', year: 2022, stage: 'Final', homeTeam: 'Argentina', awayTeam: 'France', homeGoals: 3, awayGoals: 3, winner: 'Argentina' },
+        ];
+
+        let filteredData = [...data];
+        let goalsChart, winsChart;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            populateFilters();
+            updateDisplay();
+        });
+
+        function populateFilters() {
+            const years = [...new Set(data.map(m => m.year))].sort((a, b) => b - a);
+            const yearSelect = document.getElementById('yearFilter');
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+
+            const teams = [...new Set(data.flatMap(m => [m.homeTeam, m.awayTeam]))].sort();
+            const teamSelect = document.getElementById('teamFilter');
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamSelect.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const year = document.getElementById('yearFilter').value;
+            const team = document.getElementById('teamFilter').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredData = data.filter(match => {
+                const matchYear = year ? match.year == year : true;
+                const matchTeam = team ? (match.homeTeam === team || match.awayTeam === team) : true;
+                const matchSearch = search ? 
+                    (match.homeTeam.toLowerCase().includes(search) || 
+                     match.awayTeam.toLowerCase().includes(search) ||
+                     match.stage.toLowerCase().includes(search)) : true;
+                
+                return matchYear && matchTeam && matchSearch;
+            });
+
+            updateDisplay();
+        }
+
+        function resetFilters() {
+            document.getElementById('yearFilter').value = '';
+            document.getElementById('teamFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            filteredData = [...data];
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            updateStats();
+            updateMatchesTable();
+            updateTeamStats();
+            updateCharts();
+        }
+
+        function updateStats() {
+            const matches = filteredData.length;
+            const goals = filteredData.reduce((sum, m) => sum + m.homeGoals + m.awayGoals, 0);
+            const teams = new Set(filteredData.flatMap(m => [m.homeTeam, m.awayTeam])).size;
+
+            document.getElementById('totalMatches').textContent = matches;
+            document.getElementById('totalGoals').textContent = goals;
+            document.getElementById('avgGoals').textContent = matches > 0 ? (goals / matches).toFixed(1) : '0.0';
+            document.getElementById('totalTeams').textContent = teams;
+        }
+
+        function updateMatchesTable() {
+            const tbody = document.getElementById('matchesTableBody');
+            tbody.innerHTML = '';
+
+            filteredData.forEach(match => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(match.date).toLocaleDateString()}</td>
+                    <td>${match.year}</td>
+                    <td>${match.stage}</td>
+                    <td>${match.homeTeam}</td>
+                    <td>${match.awayTeam}</td>
+                    <td><strong>${match.homeGoals} - ${match.awayGoals}</strong></td>
+                    <td>${match.winner}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-data">No matches found</td></tr>';
+            }
+        }
+
+        function updateTeamStats() {
+            const teamStats = {};
+
+            filteredData.forEach(match => {
+                [match.homeTeam, match.awayTeam].forEach(team => {
+                    if (!teamStats[team]) {
+                        teamStats[team] = { matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 };
+                    }
+                    teamStats[team].matches++;
+                });
+
+                teamStats[match.homeTeam].goalsFor += match.homeGoals;
+                teamStats[match.homeTeam].goalsAgainst += match.awayGoals;
+                teamStats[match.awayTeam].goalsFor += match.awayGoals;
+                teamStats[match.awayTeam].goalsAgainst += match.homeGoals;
+
+                if (match.winner === 'Draw') {
+                    teamStats[match.homeTeam].draws++;
+                    teamStats[match.awayTeam].draws++;
+                } else if (match.winner === match.homeTeam) {
+                    teamStats[match.homeTeam].wins++;
+                    teamStats[match.awayTeam].losses++;
+                } else {
+                    teamStats[match.awayTeam].wins++;
+                    teamStats[match.homeTeam].losses++;
+                }
+            });
+
+            const tbody = document.getElementById('statsTableBody');
+            tbody.innerHTML = '';
+
+            Object.entries(teamStats).sort().forEach(([team, stats]) => {
+                const row = document.createElement('tr');
+                const goalDiff = stats.goalsFor - stats.goalsAgainst;
+                row.innerHTML = `
+                    <td><strong>${team}</strong></td>
+                    <td>${stats.matches}</td>
+                    <td>${stats.wins}</td>
+                    <td>${stats.draws}</td>
+                    <td>${stats.losses}</td>
+                    <td>${stats.goalsFor}</td>
+                    <td>${stats.goalsAgainst}</td>
+                    <td>${goalDiff > 0 ? '+' : ''}${goalDiff}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (Object.keys(teamStats).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No team statistics available</td></tr>';
+            }
+        }
+
+        function updateCharts() {
+            // Goals by Team
+            const teamGoals = {};
+            filteredData.forEach(match => {
+                teamGoals[match.homeTeam] = (teamGoals[match.homeTeam] || 0) + match.homeGoals;
+                teamGoals[match.awayTeam] = (teamGoals[match.awayTeam] || 0) + match.awayGoals;
+            });
+
+            const sortedTeams = Object.entries(teamGoals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            const ctxGoals = document.getElementById('goalsChart').getContext('2d');
+            if (goalsChart) goalsChart.destroy();
+            goalsChart = new Chart(ctxGoals, {
+                type: 'bar',
+                data: {
+                    labels: sortedTeams.map(t => t[0]),
+                    datasets: [{
+                        label: 'Goals Scored',
+                        data: sortedTeams.map(t => t[1]),
+                        backgroundColor: '#667eea',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Wins by Team
+            const teamWins = {};
+            filteredData.forEach(match => {
+                if (match.winner !== 'Draw') {
+                    teamWins[match.winner] = (teamWins[match.winner] || 0) + 1;
+                }
+            });
+
+            const sortedWins = Object.entries(teamWins)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            const ctxWins = document.getElementById('winsChart').getContext('2d');
+            if (winsChart) winsChart.destroy();
+            winsChart = new Chart(ctxWins, {
+                type: 'bar',
+                data: {
+                    labels: sortedWins.map(t => t[0]),
+                    datasets: [{
+                        label: 'Wins',
+                        data: sortedWins.map(t => t[1]),
+                        backgroundColor: '#764ba2',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
