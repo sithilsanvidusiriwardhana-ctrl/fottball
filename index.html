@@ -284,6 +284,9 @@
                     <div class="chart-container">
                         <canvas id="winsChart"></canvas>
                     </div>
+                    <div class="chart-container">
+                        <canvas id="playerPerformanceChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -331,33 +334,65 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Player Personal Data Table -->
+            <div class="section">
+                <h2>Player Personal Data</h2>
+                <div class="table-wrapper">
+                    <table id="playerTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Team</th>
+                                <th>Position</th>
+                                <th>Age</th>
+                                <th>Jersey</th>
+                                <th>Goals</th>
+                                <th>Assists</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playerTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Sample data
-        const data = [
-            { date: '2018-06-14', year: 2018, stage: 'Group', homeTeam: 'Russia', awayTeam: 'Saudi Arabia', homeGoals: 5, awayGoals: 0, winner: 'Russia' },
-            { date: '2018-06-15', year: 2018, stage: 'Group', homeTeam: 'Egypt', awayTeam: 'Uruguay', homeGoals: 0, awayGoals: 1, winner: 'Uruguay' },
-            { date: '2018-06-16', year: 2018, stage: 'Group', homeTeam: 'Portugal', awayTeam: 'Spain', homeGoals: 3, awayGoals: 3, winner: 'Draw' },
-            { date: '2014-07-13', year: 2014, stage: 'Final', homeTeam: 'Germany', awayTeam: 'Argentina', homeGoals: 1, awayGoals: 0, winner: 'Germany' },
-            { date: '2014-07-08', year: 2014, stage: 'Semi', homeTeam: 'Argentina', awayTeam: 'Netherlands', homeGoals: 0, awayGoals: 0, winner: 'Argentina' },
-            { date: '2010-07-11', year: 2010, stage: 'Final', homeTeam: 'Spain', awayTeam: 'Netherlands', homeGoals: 1, awayGoals: 0, winner: 'Spain' },
-            { date: '2022-12-18', year: 2022, stage: 'Final', homeTeam: 'Argentina', awayTeam: 'France', homeGoals: 3, awayGoals: 3, winner: 'Argentina' },
-        ];
+        const apiBase = '';
+        let allMatches = [];
+        let filteredData = [];
+        let playerData = [];
+        let goalsChart, winsChart, playerPerformanceChart;
 
-        let filteredData = [...data];
-        let goalsChart, winsChart;
-
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            populateFilters();
-            updateDisplay();
+            loadData();
         });
 
+        function loadData() {
+            Promise.all([
+                fetch(apiBase + '/api/matches').then(res => res.json()),
+                fetch(apiBase + '/api/players').then(res => res.json())
+            ])
+            .then(([matches, players]) => {
+                allMatches = matches;
+                filteredData = [...matches];
+                playerData = players;
+                populateFilters();
+                updateDisplay();
+            })
+            .catch(err => {
+                console.error('Error loading data:', err);
+                document.querySelector('.content').innerHTML =
+                    '<div class="no-data">Unable to load data from server. Start the backend and refresh.</div>';
+            });
+        }
+
         function populateFilters() {
-            const years = [...new Set(data.map(m => m.year))].sort((a, b) => b - a);
             const yearSelect = document.getElementById('yearFilter');
+            const years = [...new Set(allMatches.map(m => m.year))].sort((a, b) => b - a);
             years.forEach(year => {
                 const option = document.createElement('option');
                 option.value = year;
@@ -365,8 +400,8 @@
                 yearSelect.appendChild(option);
             });
 
-            const teams = [...new Set(data.flatMap(m => [m.homeTeam, m.awayTeam]))].sort();
             const teamSelect = document.getElementById('teamFilter');
+            const teams = [...new Set(allMatches.flatMap(m => [m.homeTeam, m.awayTeam]))].sort();
             teams.forEach(team => {
                 const option = document.createElement('option');
                 option.value = team;
@@ -380,7 +415,7 @@
             const team = document.getElementById('teamFilter').value;
             const search = document.getElementById('searchInput').value.toLowerCase();
 
-            filteredData = data.filter(match => {
+            filteredData = allMatches.filter(match => {
                 const matchYear = year ? match.year == year : true;
                 const matchTeam = team ? (match.homeTeam === team || match.awayTeam === team) : true;
                 const matchSearch = search ? 
@@ -398,7 +433,7 @@
             document.getElementById('yearFilter').value = '';
             document.getElementById('teamFilter').value = '';
             document.getElementById('searchInput').value = '';
-            filteredData = [...data];
+            filteredData = [...allMatches];
             updateDisplay();
         }
 
@@ -406,7 +441,9 @@
             updateStats();
             updateMatchesTable();
             updateTeamStats();
+            updatePlayerTable();
             updateCharts();
+            updatePlayerPerformanceChart();
         }
 
         function updateStats() {
@@ -495,6 +532,30 @@
             }
         }
 
+        function updatePlayerTable() {
+            const tbody = document.getElementById('playerTableBody');
+            tbody.innerHTML = '';
+
+            playerData.forEach(player => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${player.name}</strong></td>
+                    <td>${player.team}</td>
+                    <td>${player.position}</td>
+                    <td>${player.age}</td>
+                    <td>${player.jersey}</td>
+                    <td>${player.goals}</td>
+                    <td>${player.assists}</td>
+                    <td>${player.rating.toFixed(1)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (playerData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No player data available</td></tr>';
+            }
+        }
+
         function updateCharts() {
             // Goals by Team
             const teamGoals = {};
@@ -558,6 +619,45 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            updatePlayerPerformanceChart();
+        }
+
+        function updatePlayerPerformanceChart() {
+            const ctxPlayer = document.getElementById('playerPerformanceChart').getContext('2d');
+            if (playerPerformanceChart) playerPerformanceChart.destroy();
+
+            playerPerformanceChart = new Chart(ctxPlayer, {
+                type: 'bar',
+                data: {
+                    labels: playerData.map(p => p.name),
+                    datasets: [
+                        {
+                            label: 'Goals',
+                            data: playerData.map(p => p.goals),
+                            backgroundColor: '#ff9f43',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Assists',
+                            data: playerData.map(p => p.assists),
+                            backgroundColor: '#2ec4b6',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: true, text: 'Player Performance (Goals vs Assists)' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
                 }
             });
         }
