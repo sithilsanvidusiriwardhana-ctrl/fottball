@@ -312,6 +312,26 @@
                 </div>
             </div>
 
+            <!-- Upcoming Match Table -->
+            <div class="section">
+                <h2>Upcoming Matches</h2>
+                <div class="table-wrapper">
+                    <table id="upcomingMatchesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Stage</th>
+                                <th>Home Team</th>
+                                <th>Away Team</th>
+                                <th>Venue</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcomingMatchesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Team Statistics Table -->
             <div class="section">
                 <h2>Team Statistics</h2>
@@ -440,6 +460,7 @@
         function updateDisplay() {
             updateStats();
             updateMatchesTable();
+            updateUpcomingMatchesTable();
             updateTeamStats();
             updatePlayerTable();
             updateCharts();
@@ -480,6 +501,37 @@
             }
         }
 
+        function updateUpcomingMatchesTable() {
+            const tbody = document.getElementById('upcomingMatchesTableBody');
+            tbody.innerHTML = '';
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const upcomingMatches = allMatches
+                .filter(match => {
+                    const matchDate = new Date(match.date);
+                    matchDate.setHours(0, 0, 0, 0);
+                    return matchDate >= today;
+                })
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            upcomingMatches.forEach(match => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(match.date).toLocaleDateString()}</td>
+                    <td>${match.stage}</td>
+                    <td>${match.homeTeam}</td>
+                    <td>${match.awayTeam}</td>
+                    <td>${match.venue || 'TBD'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (upcomingMatches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No upcoming matches scheduled</td></tr>';
+            }
+        }
+
         function updateTeamStats() {
             const teamStats = {};
 
@@ -502,7 +554,7 @@
                 } else if (match.winner === match.homeTeam) {
                     teamStats[match.homeTeam].wins++;
                     teamStats[match.awayTeam].losses++;
-                } else {
+                } else if (match.winner === match.awayTeam) {
                     teamStats[match.awayTeam].wins++;
                     teamStats[match.homeTeam].losses++;
                 }

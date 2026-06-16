@@ -53,7 +53,9 @@ function initializeDatabase() {
       ['2014-07-13', 2014, 'Final', 'Germany', 'Argentina', 1, 0, 'Germany'],
       ['2014-07-08', 2014, 'Semi', 'Argentina', 'Netherlands', 0, 0, 'Argentina'],
       ['2010-07-11', 2010, 'Final', 'Spain', 'Netherlands', 1, 0, 'Spain'],
-      ['2022-12-18', 2022, 'Final', 'Argentina', 'France', 3, 3, 'Argentina']
+      ['2022-12-18', 2022, 'Final', 'Argentina', 'France', 3, 3, 'Argentina'],
+      ['2026-11-20', 2026, 'Group', 'United States', 'Germany', 0, 0, ''],
+      ['2026-11-21', 2026, 'Group', 'Brazil', 'Spain', 0, 0, '']
     ];
 
     const players = [
