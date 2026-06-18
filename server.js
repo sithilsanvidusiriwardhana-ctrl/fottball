@@ -104,6 +104,44 @@ app.get('/api/players', (req, res) => {
   });
 });
 
+// Add new match
+app.post('/api/matches', express.json(), (req, res) => {
+  const { date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue } = req.body;
+  
+  if (!date || !homeTeam || !awayTeam) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  db.run(
+    `INSERT INTO matches (date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID, message: 'Match added successfully' });
+    }
+  );
+});
+
+// Add new player
+app.post('/api/players', express.json(), (req, res) => {
+  const { name, team, position, age, jersey, goals, assists, rating } = req.body;
+  
+  if (!name || !team) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  db.run(
+    `INSERT INTO players (name, team, position, age, jersey, goals, assists, rating)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [name, team, position, age, jersey, goals, assists, rating],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID, message: 'Player added successfully' });
+    }
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
   initializeDatabase();

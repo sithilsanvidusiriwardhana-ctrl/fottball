@@ -249,6 +249,60 @@
 
             <button onclick="applyFilters()">Apply Filters</button>
             <button onclick="resetFilters()">Reset</button>
+            <button onclick="toggleAddForm()">➕ Add Data</button>
+        </div>
+
+        <!-- Add Data Form -->
+        <div id="addDataForm" style="display: none; padding: 20px; background: #f0f0f0; border-top: 2px solid #667eea;">
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <h3 style="margin-bottom: 20px;">Add New Match or Player</h3>
+                
+                <!-- Match Form -->
+                <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 15px;">Add Match</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <input type="date" id="matchDate" placeholder="Date">
+                        <input type="number" id="matchYear" placeholder="Year">
+                        <select id="matchStage">
+                            <option value="">Select Stage</option>
+                            <option value="Group">Group</option>
+                            <option value="Round 16">Round 16</option>
+                            <option value="Quarter">Quarter</option>
+                            <option value="Semi">Semi</option>
+                            <option value="Final">Final</option>
+                        </select>
+                        <input type="text" id="matchHomeTeam" placeholder="Home Team">
+                        <input type="text" id="matchAwayTeam" placeholder="Away Team">
+                        <input type="number" id="matchHomeGoals" placeholder="Home Goals" min="0">
+                        <input type="number" id="matchAwayGoals" placeholder="Away Goals" min="0">
+                        <input type="text" id="matchWinner" placeholder="Winner (or Draw)">
+                        <input type="text" id="matchVenue" placeholder="Venue">
+                        <button onclick="addMatch()" style="grid-column: span 1; background: #667eea; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">Add Match</button>
+                    </div>
+                </div>
+
+                <!-- Player Form -->
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin-bottom: 15px;">Add Player</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <input type="text" id="playerName" placeholder="Player Name">
+                        <input type="text" id="playerTeam" placeholder="Team">
+                        <select id="playerPosition">
+                            <option value="">Select Position</option>
+                            <option value="Goalkeeper">Goalkeeper</option>
+                            <option value="Defender">Defender</option>
+                            <option value="Midfielder">Midfielder</option>
+                            <option value="Forward">Forward</option>
+                        </select>
+                        <input type="number" id="playerAge" placeholder="Age" min="0">
+                        <input type="number" id="playerJersey" placeholder="Jersey #" min="0">
+                        <input type="number" id="playerGoals" placeholder="Goals" min="0">
+                        <input type="number" id="playerAssists" placeholder="Assists" min="0">
+                        <input type="number" id="playerRating" placeholder="Rating (0-10)" min="0" max="10" step="0.1">
+                        <button onclick="addPlayer()" style="grid-column: span 1; background: #667eea; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">Add Player</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="content">
@@ -391,6 +445,103 @@
             loadData();
         });
 
+        function toggleAddForm() {
+            const form = document.getElementById('addDataForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addMatch() {
+            const match = {
+                date: document.getElementById('matchDate').value,
+                year: parseInt(document.getElementById('matchYear').value),
+                stage: document.getElementById('matchStage').value,
+                homeTeam: document.getElementById('matchHomeTeam').value,
+                awayTeam: document.getElementById('matchAwayTeam').value,
+                homeGoals: parseInt(document.getElementById('matchHomeGoals').value),
+                awayGoals: parseInt(document.getElementById('matchAwayGoals').value),
+                winner: document.getElementById('matchWinner').value,
+                venue: document.getElementById('matchVenue').value
+            };
+
+            if (!match.date || !match.homeTeam || !match.awayTeam) {
+                alert('Please fill in all required fields (Date, Home Team, Away Team)');
+                return;
+            }
+
+            fetch('/api/matches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(match)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert('Match added successfully!');
+                clearMatchForm();
+                loadData();
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error adding match: ' + err.message);
+            });
+        }
+
+        function addPlayer() {
+            const player = {
+                name: document.getElementById('playerName').value,
+                team: document.getElementById('playerTeam').value,
+                position: document.getElementById('playerPosition').value,
+                age: parseInt(document.getElementById('playerAge').value) || 0,
+                jersey: parseInt(document.getElementById('playerJersey').value) || 0,
+                goals: parseInt(document.getElementById('playerGoals').value) || 0,
+                assists: parseInt(document.getElementById('playerAssists').value) || 0,
+                rating: parseFloat(document.getElementById('playerRating').value) || 0
+            };
+
+            if (!player.name || !player.team) {
+                alert('Please fill in all required fields (Name, Team)');
+                return;
+            }
+
+            fetch('/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(player)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert('Player added successfully!');
+                clearPlayerForm();
+                loadData();
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error adding player: ' + err.message);
+            });
+        }
+
+        function clearMatchForm() {
+            document.getElementById('matchDate').value = '';
+            document.getElementById('matchYear').value = '';
+            document.getElementById('matchStage').value = '';
+            document.getElementById('matchHomeTeam').value = '';
+            document.getElementById('matchAwayTeam').value = '';
+            document.getElementById('matchHomeGoals').value = '';
+            document.getElementById('matchAwayGoals').value = '';
+            document.getElementById('matchWinner').value = '';
+            document.getElementById('matchVenue').value = '';
+        }
+
+        function clearPlayerForm() {
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerTeam').value = '';
+            document.getElementById('playerPosition').value = '';
+            document.getElementById('playerAge').value = '';
+            document.getElementById('playerJersey').value = '';
+            document.getElementById('playerGoals').value = '';
+            document.getElementById('playerAssists').value = '';
+            document.getElementById('playerRating').value = '';
+        }
+
         function loadData() {
             fetch(apiBase + '/data.json')
             .then(res => res.json())
@@ -403,8 +554,20 @@
             })
             .catch(err => {
                 console.error('Error loading data:', err);
-                document.querySelector('.content').innerHTML =
-                    '<div class="no-data">Unable to load data. Generate data.json and refresh.</div>';
+                // Try to fetch from API if data.json doesn't exist
+                fetch('/api/matches')
+                .then(res => res.json())
+                .then(data => {
+                    allMatches = data || [];
+                    filteredData = [...allMatches];
+                    populateFilters();
+                    updateDisplay();
+                })
+                .catch(err2 => {
+                    console.error('Error loading from API:', err2);
+                    document.querySelector('.content').innerHTML =
+                        '<div class="no-data">No data found. Add data using the ➕ Add Data button.</div>';
+                });
             });
         }
 
