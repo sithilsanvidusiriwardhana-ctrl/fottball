@@ -29,6 +29,64 @@ typedef struct {
     float rating;
 } Player;
 
+// Function to input match data from user
+void inputMatch(Match *match) {
+    printf("\n--- Enter Match Details ---\n");
+    printf("Date (YYYY-MM-DD): ");
+    scanf("%s", match->date);
+    printf("Year: ");
+    scanf("%d", &match->year);
+    printf("Stage (Group/Knockout/Final): ");
+    scanf("%s", match->stage);
+    printf("Home Team: ");
+    scanf("%s", match->homeTeam);
+    printf("Away Team: ");
+    scanf("%s", match->awayTeam);
+    printf("Home Goals: ");
+    scanf("%d", &match->homeGoals);
+    printf("Away Goals: ");
+    scanf("%d", &match->awayGoals);
+    printf("Winner: ");
+    scanf("%s", match->winner);
+    printf("Venue: ");
+    scanf("%s", match->venue);
+}
+
+// Function to input player data from user
+void inputPlayer(Player *player) {
+    printf("\n--- Enter Player Details ---\n");
+    printf("Player Name: ");
+    scanf("%s", player->name);
+    printf("Team: ");
+    scanf("%s", player->team);
+    printf("Position: ");
+    scanf("%s", player->position);
+    printf("Age: ");
+    scanf("%d", &player->age);
+    printf("Jersey Number: ");
+    scanf("%d", &player->jersey);
+    printf("Goals: ");
+    scanf("%d", &player->goals);
+    printf("Assists: ");
+    scanf("%d", &player->assists);
+    printf("Rating (0-10): ");
+    scanf("%f", &player->rating);
+}
+
+// Function to display menu
+int displayMenu() {
+    int choice;
+    printf("\n===== Sports Data Collection System =====\n");
+    printf("1. Load data from CSV files\n");
+    printf("2. Enter match data manually\n");
+    printf("3. Enter player data manually\n");
+    printf("4. Generate JSON and Exit\n");
+    printf("5. Exit\n");
+    printf("Enter your choice (1-5): ");
+    scanf("%d", &choice);
+    return choice;
+}
+
 int main(void) {
     FILE *input = fopen("matches_input.csv", "r");
     FILE *players_input = fopen("players_input.csv", "r");
@@ -42,47 +100,91 @@ int main(void) {
     Match matches[MAX_MATCHES];
     Player players[MAX_PLAYERS];
     int match_count = 0, player_count = 0;
-
-    // Read matches from CSV file (if exists)
-    if (input) {
-        char line[500];
-        fgets(line, sizeof(line), input); // Skip header
-        while (fgets(line, sizeof(line), input) && match_count < MAX_MATCHES) {
-            sscanf(line, "%[^,],%d,%[^,],%[^,],%[^,],%d,%d,%[^,],%s",
-                   matches[match_count].date,
-                   &matches[match_count].year,
-                   matches[match_count].stage,
-                   matches[match_count].homeTeam,
-                   matches[match_count].awayTeam,
-                   &matches[match_count].homeGoals,
-                   &matches[match_count].awayGoals,
-                   matches[match_count].winner,
-                   matches[match_count].venue);
-            match_count++;
+    int choice;
+    
+    // Menu-driven data entry system
+    while (1) {
+        choice = displayMenu();
+        
+        switch(choice) {
+            case 1:
+                // Load from CSV files
+                if (input) {
+                    char line[500];
+                    fgets(line, sizeof(line), input); // Skip header
+                    while (fgets(line, sizeof(line), input) && match_count < MAX_MATCHES) {
+                        sscanf(line, "%[^,],%d,%[^,],%[^,],%[^,],%d,%d,%[^,],%s",
+                               matches[match_count].date,
+                               &matches[match_count].year,
+                               matches[match_count].stage,
+                               matches[match_count].homeTeam,
+                               matches[match_count].awayTeam,
+                               &matches[match_count].homeGoals,
+                               &matches[match_count].awayGoals,
+                               matches[match_count].winner,
+                               matches[match_count].venue);
+                        match_count++;
+                    }
+                    fclose(input);
+                    printf("\n✓ Loaded %d matches from CSV.\n", match_count);
+                }
+                
+                if (players_input) {
+                    char line[500];
+                    fgets(line, sizeof(line), players_input); // Skip header
+                    while (fgets(line, sizeof(line), players_input) && player_count < MAX_PLAYERS) {
+                        sscanf(line, "%[^,],%[^,],%[^,],%d,%d,%d,%d,%f",
+                               players[player_count].name,
+                               players[player_count].team,
+                               players[player_count].position,
+                               &players[player_count].age,
+                               &players[player_count].jersey,
+                               &players[player_count].goals,
+                               &players[player_count].assists,
+                               &players[player_count].rating);
+                        player_count++;
+                    }
+                    fclose(players_input);
+                    printf("✓ Loaded %d players from CSV.\n", player_count);
+                }
+                break;
+                
+            case 2:
+                // Enter match data manually
+                if (match_count < MAX_MATCHES) {
+                    inputMatch(&matches[match_count]);
+                    match_count++;
+                    printf("✓ Match added! Total matches: %d\n", match_count);
+                } else {
+                    printf("✗ Maximum matches reached!\n");
+                }
+                break;
+                
+            case 3:
+                // Enter player data manually
+                if (player_count < MAX_PLAYERS) {
+                    inputPlayer(&players[player_count]);
+                    player_count++;
+                    printf("✓ Player added! Total players: %d\n", player_count);
+                } else {
+                    printf("✗ Maximum players reached!\n");
+                }
+                break;
+                
+            case 5:
+                // Exit without generating
+                printf("Exiting without saving changes.\n");
+                fclose(output);
+                return EXIT_SUCCESS;
+                
+            default:
+                printf("✗ Invalid choice! Please enter 1-5.\n");
+                continue;
         }
-        fclose(input);
     }
 
-    // Read players from CSV file (if exists)
-    if (players_input) {
-        char line[500];
-        fgets(line, sizeof(line), players_input); // Skip header
-        while (fgets(line, sizeof(line), players_input) && player_count < MAX_PLAYERS) {
-            sscanf(line, "%[^,],%[^,],%[^,],%d,%d,%d,%d,%f",
-                   players[player_count].name,
-                   players[player_count].team,
-                   players[player_count].position,
-                   &players[player_count].age,
-                   &players[player_count].jersey,
-                   &players[player_count].goals,
-                   &players[player_count].assists,
-                   &players[player_count].rating);
-            player_count++;
-        }
-        fclose(players_input);
-    }
-
-    // If no CSV files, use default data
+generate:
+    // If no data, use default
     if (match_count == 0) {
         strcpy(matches[0].date, "2018-06-14");
         matches[0].year = 2018;
