@@ -392,26 +392,25 @@
         });
 
         function loadData() {
-            Promise.all([
-                fetch(apiBase + '/api/matches').then(res => res.json()),
-                fetch(apiBase + '/api/players').then(res => res.json())
-            ])
-            .then(([matches, players]) => {
-                allMatches = matches;
-                filteredData = [...matches];
-                playerData = players;
+            fetch(apiBase + '/data.json')
+            .then(res => res.json())
+            .then(data => {
+                allMatches = data.matches || [];
+                filteredData = [...allMatches];
+                playerData = data.players || [];
                 populateFilters();
                 updateDisplay();
             })
             .catch(err => {
                 console.error('Error loading data:', err);
                 document.querySelector('.content').innerHTML =
-                    '<div class="no-data">Unable to load data from server. Start the backend and refresh.</div>';
+                    '<div class="no-data">Unable to load data. Generate data.json and refresh.</div>';
             });
         }
 
         function populateFilters() {
             const yearSelect = document.getElementById('yearFilter');
+            yearSelect.innerHTML = '<option value="">All Years</option>';
             const years = [...new Set(allMatches.map(m => m.year))].sort((a, b) => b - a);
             years.forEach(year => {
                 const option = document.createElement('option');
@@ -421,6 +420,7 @@
             });
 
             const teamSelect = document.getElementById('teamFilter');
+            teamSelect.innerHTML = '<option value="">All Teams</option>';
             const teams = [...new Set(allMatches.flatMap(m => [m.homeTeam, m.awayTeam]))].sort();
             teams.forEach(team => {
                 const option = document.createElement('option');

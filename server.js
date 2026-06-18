@@ -15,11 +15,8 @@ const db = new sqlite3.Database(DB_FILE, err => {
 
 function initializeDatabase() {
   db.serialize(() => {
-    db.run(`DROP TABLE IF EXISTS matches`);
-    db.run(`DROP TABLE IF EXISTS players`);
-
     db.run(`
-      CREATE TABLE matches (
+      CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY,
         date TEXT,
         year INTEGER,
@@ -28,12 +25,13 @@ function initializeDatabase() {
         awayTeam TEXT,
         homeGoals INTEGER,
         awayGoals INTEGER,
-        winner TEXT
+        winner TEXT,
+        venue TEXT
       )
     `);
 
     db.run(`
-      CREATE TABLE players (
+      CREATE TABLE IF NOT EXISTS players (
         id INTEGER PRIMARY KEY,
         name TEXT,
         team TEXT,
@@ -46,39 +44,47 @@ function initializeDatabase() {
       )
     `);
 
-    const matches = [
-      ['2018-06-14', 2018, 'Group', 'Russia', 'Saudi Arabia', 5, 0, 'Russia'],
-      ['2018-06-15', 2018, 'Group', 'Egypt', 'Uruguay', 0, 1, 'Uruguay'],
-      ['2018-06-16', 2018, 'Group', 'Portugal', 'Spain', 3, 3, 'Draw'],
-      ['2014-07-13', 2014, 'Final', 'Germany', 'Argentina', 1, 0, 'Germany'],
-      ['2014-07-08', 2014, 'Semi', 'Argentina', 'Netherlands', 0, 0, 'Argentina'],
-      ['2010-07-11', 2010, 'Final', 'Spain', 'Netherlands', 1, 0, 'Spain'],
-      ['2022-12-18', 2022, 'Final', 'Argentina', 'France', 3, 3, 'Argentina'],
-      ['2026-11-20', 2026, 'Group', 'United States', 'Germany', 0, 0, ''],
-      ['2026-11-21', 2026, 'Group', 'Brazil', 'Spain', 0, 0, '']
-    ];
+    db.get('SELECT COUNT(*) AS count FROM matches', (err, row) => {
+      if (!err && row.count === 0) {
+        const matches = [
+          ['2018-06-14', 2018, 'Group', 'Russia', 'Saudi Arabia', 5, 0, 'Russia', ''],
+          ['2018-06-15', 2018, 'Group', 'Egypt', 'Uruguay', 0, 1, 'Uruguay', ''],
+          ['2018-06-16', 2018, 'Group', 'Portugal', 'Spain', 3, 3, 'Draw', ''],
+          ['2014-07-13', 2014, 'Final', 'Germany', 'Argentina', 1, 0, 'Germany', ''],
+          ['2014-07-08', 2014, 'Semi', 'Argentina', 'Netherlands', 0, 0, 'Argentina', ''],
+          ['2010-07-11', 2010, 'Final', 'Spain', 'Netherlands', 1, 0, 'Spain', ''],
+          ['2022-12-18', 2022, 'Final', 'Argentina', 'France', 3, 3, 'Argentina', ''],
+          ['2026-11-20', 2026, 'Group', 'United States', 'Germany', 0, 0, '', ''],
+          ['2026-11-21', 2026, 'Group', 'Brazil', 'Spain', 0, 0, '', '']
+        ];
 
-    const players = [
-      ['Lionel Messi', 'Argentina', 'Forward', 35, 10, 7, 3, 9.7],
-      ['Kylian Mbappé', 'France', 'Forward', 26, 10, 6, 2, 9.4],
-      ['Neymar Jr.', 'Brazil', 'Forward', 31, 10, 5, 4, 9.1],
-      ['Harry Kane', 'England', 'Forward', 30, 9, 4, 1, 8.8],
-      ['Luka Modrić', 'Croatia', 'Midfielder', 38, 10, 2, 5, 8.6]
-    ];
+        const insertMatch = db.prepare(`
+          INSERT INTO matches (date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        matches.forEach(match => insertMatch.run(match));
+        insertMatch.finalize();
+      }
+    });
 
-    const insertMatch = db.prepare(`
-      INSERT INTO matches (date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    matches.forEach(match => insertMatch.run(match));
-    insertMatch.finalize();
+    db.get('SELECT COUNT(*) AS count FROM players', (err, row) => {
+      if (!err && row.count === 0) {
+        const players = [
+          ['Lionel Messi', 'Argentina', 'Forward', 35, 10, 7, 3, 9.7],
+          ['Kylian Mbappé', 'France', 'Forward', 26, 10, 6, 2, 9.4],
+          ['Neymar Jr.', 'Brazil', 'Forward', 31, 10, 5, 4, 9.1],
+          ['Harry Kane', 'England', 'Forward', 30, 9, 4, 1, 8.8],
+          ['Luka Modrić', 'Croatia', 'Midfielder', 38, 10, 2, 5, 8.6]
+        ];
 
-    const insertPlayer = db.prepare(`
-      INSERT INTO players (name, team, position, age, jersey, goals, assists, rating)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    players.forEach(player => insertPlayer.run(player));
-    insertPlayer.finalize();
+        const insertPlayer = db.prepare(`
+          INSERT INTO players (name, team, position, age, jersey, goals, assists, rating)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        players.forEach(player => insertPlayer.run(player));
+        insertPlayer.finalize();
+      }
+    });
   });
 }
 
