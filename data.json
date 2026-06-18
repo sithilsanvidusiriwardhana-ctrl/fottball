@@ -1,0 +1,20 @@
+{
+  "matches": [
+    {"date": "2018-06-14", "year": 2018, "stage": "Group", "homeTeam": "Russia", "awayTeam": "Saudi Arabia", "homeGoals": 5, "awayGoals": 0, "winner": "Russia", "venue": ""},
+    {"date": "2018-06-15", "year": 2018, "stage": "Group", "homeTeam": "Egypt", "awayTeam": "Uruguay", "homeGoals": 0, "awayGoals": 1, "winner": "Uruguay", "venue": ""},
+    {"date": "2018-06-16", "year": 2018, "stage": "Group", "homeTeam": "Portugal", "awayTeam": "Spain", "homeGoals": 3, "awayGoals": 3, "winner": "Draw", "venue": ""},
+    {"date": "2014-07-13", "year": 2014, "stage": "Final", "homeTeam": "Germany", "awayTeam": "Argentina", "homeGoals": 1, "awayGoals": 0, "winner": "Germany", "venue": ""},
+    {"date": "2014-07-08", "year": 2014, "stage": "Semi", "homeTeam": "Argentina", "awayTeam": "Netherlands", "homeGoals": 0, "awayGoals": 0, "winner": "Argentina", "venue": ""},
+    {"date": "2010-07-11", "year": 2010, "stage": "Final", "homeTeam": "Spain", "awayTeam": "Netherlands", "homeGoals": 1, "awayGoals": 0, "winner": "Spain", "venue": ""},
+    {"date": "2022-12-18", "year": 2022, "stage": "Final", "homeTeam": "Argentina", "awayTeam": "France", "homeGoals": 3, "awayGoals": 3, "winner": "Argentina", "venue": ""},
+    {"date": "2026-11-20", "year": 2026, "stage": "Group", "homeTeam": "United States", "awayTeam": "Germany", "homeGoals": 0, "awayGoals": 0, "winner": "", "venue": "TBD"},
+    {"date": "2026-11-21", "year": 2026, "stage": "Group", "homeTeam": "Brazil", "awayTeam": "Spain", "homeGoals": 0, "awayGoals": 0, "winner": "", "venue": "TBD"}
+  ],
+  "players": [
+    {"name": "Lionel Messi", "team": "Argentina", "position": "Forward", "age": 35, "jersey": 10, "goals": 7, "assists": 3, "rating": 9.7},
+    {"name": "Kylian Mbappé", "team": "France", "position": "Forward", "age": 26, "jersey": 10, "goals": 6, "assists": 2, "rating": 9.4},
+    {"name": "Neymar Jr.", "team": "Brazil", "position": "Forward", "age": 31, "jersey": 10, "goals": 5, "assists": 4, "rating": 9.1},
+    {"name": "Harry Kane", "team": "England", "position": "Forward", "age": 30, "jersey": 9, "goals": 4, "assists": 1, "rating": 8.8},
+    {"name": "Luka Modrić", "team": "Croatia", "position": "Midfielder", "age": 38, "jersey": 10, "goals": 2, "assists": 5, "rating": 8.6}
+  ]
+}
