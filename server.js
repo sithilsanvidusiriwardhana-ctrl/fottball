@@ -88,7 +88,20 @@ function initializeDatabase() {
   });
 }
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, filePath) => {
+    if (path.basename(filePath) === 'data.json') {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    }
+  }
+}));
+
+app.get('/data.json', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'data.json'));
+});
 
 app.get('/api/matches', (req, res) => {
   db.all('SELECT * FROM matches ORDER BY date ASC', (err, rows) => {
