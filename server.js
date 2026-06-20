@@ -6,6 +6,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_FILE = path.join(__dirname, 'worldcup.db');
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const db = new sqlite3.Database(DB_FILE, err => {
   if (err) {
     console.error('Failed to open database:', err.message);
@@ -118,17 +122,17 @@ app.get('/api/players', (req, res) => {
 });
 
 // Add new match
-app.post('/api/matches', express.json(), (req, res) => {
+app.post('/api/matches', (req, res) => {
   const { date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue } = req.body;
   
   if (!date || !homeTeam || !awayTeam) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: 'Missing required fields: date, homeTeam, awayTeam' });
   }
 
   db.run(
     `INSERT INTO matches (date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [date, year, stage, homeTeam, awayTeam, homeGoals, awayGoals, winner, venue],
+    [date, year || new Date().getFullYear(), stage || '', homeTeam, awayTeam, homeGoals || 0, awayGoals || 0, winner || '', venue || ''],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id: this.lastID, message: 'Match added successfully' });
@@ -137,17 +141,17 @@ app.post('/api/matches', express.json(), (req, res) => {
 });
 
 // Add new player
-app.post('/api/players', express.json(), (req, res) => {
+app.post('/api/players', (req, res) => {
   const { name, team, position, age, jersey, goals, assists, rating } = req.body;
   
   if (!name || !team) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: 'Missing required fields: name, team' });
   }
 
   db.run(
     `INSERT INTO players (name, team, position, age, jersey, goals, assists, rating)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [name, team, position, age, jersey, goals, assists, rating],
+    [name, team, position || '', age || 0, jersey || 0, goals || 0, assists || 0, rating || 0],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id: this.lastID, message: 'Player added successfully' });

@@ -443,6 +443,8 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
+            // Auto-refresh data every 10 seconds
+            setInterval(loadData, 10000);
         });
 
         function toggleAddForm() {
@@ -475,13 +477,21 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert('Match added successfully!');
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                alert('✅ Match added successfully!');
                 clearMatchForm();
-                loadData();
+                toggleAddForm();
+                loadData(); // Reload to show new data
+                document.getElementById('yearFilter').value = '';
+                document.getElementById('teamFilter').value = '';
+                document.getElementById('searchInput').value = '';
             })
             .catch(err => {
                 console.error('Error:', err);
-                alert('Error adding match: ' + err.message);
+                alert('❌ Error adding match: ' + err.message);
             });
         }
 
@@ -509,13 +519,21 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert('Player added successfully!');
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                alert('✅ Player added successfully!');
                 clearPlayerForm();
-                loadData();
+                toggleAddForm();
+                loadData(); // Reload to show new data
+                document.getElementById('yearFilter').value = '';
+                document.getElementById('teamFilter').value = '';
+                document.getElementById('searchInput').value = '';
             })
             .catch(err => {
                 console.error('Error:', err);
-                alert('Error adding player: ' + err.message);
+                alert('❌ Error adding player: ' + err.message);
             });
         }
 
@@ -543,28 +561,32 @@
         }
 
         function loadData() {
-            fetch(apiBase + '/data.json')
-            .then(res => res.json())
-            .then(data => {
-                allMatches = data.matches || [];
+            Promise.all([
+                fetch('/api/matches').then(res => res.json()),
+                fetch('/api/players').then(res => res.json())
+            ])
+            .then(([matches, players]) => {
+                allMatches = matches || [];
                 filteredData = [...allMatches];
-                playerData = data.players || [];
+                playerData = players || [];
                 populateFilters();
                 updateDisplay();
+                console.log('Data loaded:', allMatches.length, 'matches,', playerData.length, 'players');
             })
             .catch(err => {
                 console.error('Error loading data:', err);
-                // Try to fetch from API if data.json doesn't exist
-                fetch('/api/matches')
+                // Fallback to data.json if API fails
+                fetch(apiBase + '/data.json')
                 .then(res => res.json())
                 .then(data => {
-                    allMatches = data || [];
+                    allMatches = data.matches || [];
                     filteredData = [...allMatches];
+                    playerData = data.players || [];
                     populateFilters();
                     updateDisplay();
                 })
                 .catch(err2 => {
-                    console.error('Error loading from API:', err2);
+                    console.error('Error loading from data.json:', err2);
                     document.querySelector('.content').innerHTML =
                         '<div class="no-data">No data found. Add data using the ➕ Add Data button.</div>';
                 });
