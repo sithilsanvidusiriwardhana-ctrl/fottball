@@ -67,16 +67,31 @@
             font-size: 0.95em;
         }
 
-        input, select {
+        input, select, textarea {
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 0.95em;
             background: white;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
         }
 
         input {
             width: 200px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: start;
         }
 
         select {
@@ -431,6 +446,20 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Contact Form Section -->
+            <div class="section">
+                <h2>Contact Us</h2>
+                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                    <div class="form-grid" style="max-width: 700px; margin: 0 auto;">
+                        <input type="text" id="contactName" placeholder="Your Name">
+                        <input type="email" id="contactEmail" placeholder="Your Email">
+                        <textarea id="contactMessage" placeholder="Your Message" rows="5"></textarea>
+                        <button onclick="submitContact()" style="width: fit-content; justify-self: start;">Send Message</button>
+                        <div id="contactStatus" style="color: #333; font-weight: 600; grid-column: span 2;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -560,36 +589,75 @@
             document.getElementById('playerRating').value = '';
         }
 
+        function clearContactFields() {
+            document.getElementById('contactName').value = '';
+            document.getElementById('contactEmail').value = '';
+            document.getElementById('contactMessage').value = '';
+        }
+
+        function submitContact() {
+            const contact = {
+                name: document.getElementById('contactName').value.trim(),
+                email: document.getElementById('contactEmail').value.trim(),
+                message: document.getElementById('contactMessage').value.trim()
+            };
+
+            const statusEl = document.getElementById('contactStatus');
+            statusEl.style.color = '#333';
+            statusEl.textContent = 'Sending your message...';
+
+            if (!contact.name || !contact.email || !contact.message) {
+                statusEl.style.color = '#d9534f';
+                statusEl.textContent = 'Please fill in all contact fields.';
+                return;
+            }
+
+            fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contact)
+            })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok || data.error) {
+                    statusEl.style.color = '#d9534f';
+                    statusEl.textContent = 'Error: ' + (data.error || 'Unable to send message');
+                    return;
+                }
+                statusEl.style.color = '#28a745';
+                statusEl.textContent = 'Thank you! Your message has been sent.';
+                clearContactFields();
+            })
+            .catch(err => {
+                console.error('Contact form error:', err);
+                statusEl.style.color = '#d9534f';
+                statusEl.textContent = 'Could not send your message. Please make sure the server is running.';
+            });
+        }
+
         function loadData() {
             Promise.all([
-                fetch('/api/matches').then(res => res.json()),
-                fetch('/api/players').then(res => res.json())
+                fetch('/api/matches').then(res => {
+                    if (!res.ok) throw new Error('Failed to load matches from database');
+                    return res.json();
+                }),
+                fetch('/api/players').then(res => {
+                    if (!res.ok) throw new Error('Failed to load players from database');
+                    return res.json();
+                })
             ])
             .then(([matches, players]) => {
-                allMatches = matches || [];
+                allMatches = Array.isArray(matches) ? matches : [];
                 filteredData = [...allMatches];
-                playerData = players || [];
+                playerData = Array.isArray(players) ? players : [];
                 populateFilters();
                 updateDisplay();
                 console.log('Data loaded:', allMatches.length, 'matches,', playerData.length, 'players');
             })
             .catch(err => {
                 console.error('Error loading data:', err);
-                // Fallback to data.json if API fails
-                fetch(apiBase + '/data.json')
-                .then(res => res.json())
-                .then(data => {
-                    allMatches = data.matches || [];
-                    filteredData = [...allMatches];
-                    playerData = data.players || [];
-                    populateFilters();
-                    updateDisplay();
-                })
-                .catch(err2 => {
-                    console.error('Error loading from data.json:', err2);
-                    document.querySelector('.content').innerHTML =
-                        '<div class="no-data">No data found. Add data using the ➕ Add Data button.</div>';
-                });
+                document.querySelector('.content').innerHTML =
+                    '<div class="no-data">Unable to load data from the database. Make sure the server is running and the SQLite database is initialized.</div>';
             });
         }
 
